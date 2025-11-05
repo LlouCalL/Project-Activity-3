@@ -1,91 +1,62 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>GraphHopper Routing UI</title>
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
-  <div class="container" role="main">
-    <header>
-      <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
-        <rect width="24" height="24" rx="6" fill="#052028"/>
-        <path d="M4 13c2-6 8-8 14-6" stroke="#06b6d4" stroke-width="1.5" stroke-linecap="round"/>
-        <circle cx="7" cy="15" r="1.8" fill="#10b981"/>
-      </svg>
-      <div>
-        <h1>GraphHopper Routing — UI Demo</h1>
-        <div class="muted">Enter start/destination, pick a vehicle and unit, then click <strong>Get Route</strong>.</div>
-      </div>
-    </header>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GraphHopper Route Finder</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>GraphHopper Route Finder</h1>
 
-    <form id="routeForm" onsubmit="return false;">
-      <div class="full">
-        <label for="apiKey">GraphHopper API Key <span class="tiny">(Replace with your key)</span></label>
-        <input id="apiKey" type="text" value="7fc6933f-2209-4248-8ca4-d11d6eacfd68" />
-      </div>
+      <div class="input-section">
+        <label>From:</label>
+        <input id="from" placeholder="Starting location" />
 
-      <div>
-        <label for="from">Starting Location</label>
-        <input id="from" type="text" placeholder="e.g., Ayala Triangle, Makati" />
-      </div>
+        <label>To:</label>
+        <input id="to" placeholder="Destination" />
 
-      <div>
-        <label for="to">Destination</label>
-        <input id="to" type="text" placeholder="e.g., SM Mall of Asia, Pasay" />
-      </div>
-
-      <div>
-        <label for="vehicle">Vehicle profile</label>
+        <label>Vehicle:</label>
         <select id="vehicle">
           <option value="car">Car</option>
           <option value="bike">Bike</option>
           <option value="foot">Foot</option>
         </select>
-      </div>
 
-      <div>
-        <label for="unit">Units</label>
+        <label>Unit:</label>
         <select id="unit">
-          <option value="km">Kilometers (km)</option>
-          <option value="mi">Miles (mi)</option>
+          <option value="km">Metric (km)</option>
+          <option value="mi">Imperial (mi)</option>
         </select>
+
+        <div class="btn-group">
+          <button id="getRouteBtn">Get Route</button>
+          <button id="clearBtn">Clear</button>
+        </div>
       </div>
 
-      <div class="full actions">
-        <button id="getRouteBtn" type="button">Get Route</button>
-        <button id="clearBtn" class="secondary" type="button">Clear</button>
-      </div>
-    </form>
+      <div id="message" class="message"></div>
 
-    <div id="output" class="card" hidden>
-      <div class="summary">
-        <div class="pill" id="routeTitle">Route summary</div>
-        <div class="pill" id="routeDistance"></div>
-        <div class="pill" id="routeTime"></div>
-        <div class="pill" id="routeVehicle"></div>
-      </div>
-      <div id="geocodeInfo" class="muted tiny"></div>
+      <div id="output" hidden>
+        <h2 id="routeTitle"></h2>
+        <p id="geocodeInfo"></p>
+        <p id="routeDistance"></p>
+        <p id="routeTime"></p>
+        <p id="routeVehicle"></p>
 
-      <div id="instructionsArea">
-        <h3>Turn-by-turn Directions</h3>
         <table id="instructionsTable">
           <thead>
-            <tr><th>Instruction</th><th>Distance</th></tr>
+            <tr>
+              <th>Instruction</th>
+              <th>Distance</th>
+            </tr>
           </thead>
           <tbody></tbody>
         </table>
       </div>
     </div>
 
-    <div id="message" class="card" style="display:none;"></div>
-
-    <footer>
-      <div>Note: This demo calls GraphHopper’s APIs directly. In production, hide your API key on a backend server.</div>
-    </footer>
-  </div>
-
-  <script src="script.js"></script>
-</body>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+  </body>
 </html>
