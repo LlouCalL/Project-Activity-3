@@ -1,10 +1,20 @@
 let map;
 let routeLayer;
-let highlightLayer;
 
-// Keep track of the last route for saving as favorite
+// Keep last route for saving
 let lastRouteData = null;
 
+// Elements
+const results = document.getElementById("results");
+const errorBox = document.getElementById("error");
+const saveBtn = document.getElementById("saveRouteBtn");
+const viewBtn = document.getElementById("viewFavoritesBtn");
+const modalRoot = document.getElementById("modal-root");
+
+
+// ===============================
+//  SUBMIT: Get Route
+// ===============================
 document.getElementById("routeForm").addEventListener("submit", async (e) => {
   e.preventDefault();
 
@@ -13,13 +23,10 @@ document.getElementById("routeForm").addEventListener("submit", async (e) => {
   const vehicle = document.getElementById("vehicle").value;
   const unit = document.getElementById("unit").value;
 
-  const errorBox = document.getElementById("error");
-  const results = document.getElementById("results");
-  const saveBtn = document.getElementById("saveRouteBtn");
-
   errorBox.classList.add("hidden");
   results.classList.add("hidden");
-  if (saveBtn) saveBtn.classList.add("hidden");
+  saveBtn.classList.add("hidden");
+  viewBtn.classList.add("hidden");
 
   try {
     const res = await fetch("/get_route", {
@@ -31,9 +38,10 @@ document.getElementById("routeForm").addEventListener("submit", async (e) => {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Route not found");
 
-    // store latest route so we can save it as favorite
-    lastRouteData = data;
+    // Store last route for saving
+    lastRouteData = { ...data, from, to, vehicle, unit };
 
+    // Fill summary
     document.getElementById("distance").textContent = data.distance;
     document.getElementById("time").textContent = data.time;
     document.getElementById("vehicleType").textContent = data.vehicle;
@@ -41,15 +49,15 @@ document.getElementById("routeForm").addEventListener("submit", async (e) => {
     results.classList.remove("hidden");
 
     const coords = data.points.coordinates.map((p) => [p[1], p[0]]);
-    showMap(coords, data.instructions);
+    showMap(coords);
 
-    // Display instructions in boxes
+    // Build instructions
     const instructionsDiv = document.getElementById("instructions");
     instructionsDiv.innerHTML = "<h3>Turn-by-Turn Instructions</h3>";
+
     data.instructions.forEach((step, i) => {
       const div = document.createElement("div");
       div.classList.add("instruction-box");
-      div.dataset.interval = JSON.stringify(step.interval);
       div.innerHTML = `
         <p><strong>Step ${i + 1}:</strong> ${step.text}</p>
         <p class="small"><em>${step.distance}</em></p>
@@ -57,44 +65,38 @@ document.getElementById("routeForm").addEventListener("submit", async (e) => {
       instructionsDiv.appendChild(div);
     });
 
-    // Add hover event for each instruction
-    document.querySelectorAll(".instruction-box").forEach((box) => {
-      box.addEventListener("mouseenter", () => highlightSegment(box.dataset.interval, coords));
-      box.addEventListener("mouseleave", () => removeHighlight());
-    });
+    // SHOW THE BUTTONS AFTER ROUTE IS LOADED
+    saveBtn.classList.remove("hidden");
+    viewBtn.classList.remove("hidden");
 
-    // Show and wire the "Save Favorite Route" button
-    if (saveBtn) {
-      saveBtn.classList.remove("hidden");
-      saveBtn.onclick = () => {
-        if (lastRouteData) {
-          saveFavoriteRoute(lastRouteData);
-        }
-      };
-    }
   } catch (err) {
     errorBox.textContent = `Error: ${err.message}`;
     errorBox.classList.remove("hidden");
   }
 });
 
+
+// ===============================
+//  CLEAR
+// ===============================
 document.getElementById("clear").addEventListener("click", () => {
   document.getElementById("routeForm").reset();
-  document.getElementById("results").classList.add("hidden");
-  document.getElementById("error").classList.add("hidden");
-
-  const saveBtn = document.getElementById("saveRouteBtn");
-  if (saveBtn) saveBtn.classList.add("hidden");
+  results.classList.add("hidden");
+  errorBox.classList.add("hidden");
+  saveBtn.classList.add("hidden");
+  viewBtn.classList.add("hidden");
 
   lastRouteData = null;
 
   if (map && routeLayer) routeLayer.remove();
-  if (highlightLayer) highlightLayer.remove();
 });
 
-function showMap(coords, instructions) {
+
+// ===============================
+//  MAP
+// ===============================
+function showMap(coords) {
   const start = coords[0];
-  const end = coords[coords.length - 1];
 
   if (!map) {
     map = L.map("map").setView(start, 10);
@@ -105,56 +107,109 @@ function showMap(coords, instructions) {
   }
 
   if (routeLayer) routeLayer.remove();
-
   routeLayer = L.polyline(coords, { color: "blue", weight: 5 }).addTo(map);
-  L.marker(start).addTo(map).bindPopup("Start");
-  L.marker(end).addTo(map).bindPopup("Destination");
   map.fitBounds(routeLayer.getBounds(), { padding: [40, 40] });
 }
 
-function highlightSegment(intervalData, coords) {
-  if (highlightLayer) highlightLayer.remove();
-  const interval = JSON.parse(intervalData);
-  const segmentCoords = coords.slice(interval[0], interval[1] + 1);
-  highlightLayer = L.polyline(segmentCoords, { color: "yellow", weight: 8 }).addTo(map);
-}
 
-function removeHighlight() {
-  if (highlightLayer) highlightLayer.remove();
-}
 
-// --------------- NEW: Save Favorite Route ---------------
-async function saveFavoriteRoute(routeData) {
-  try {
-    const name = prompt("Name this route (e.g., Weekend to Tagaytay):");
-    if (!name) return;
+// ===============================
+//  SAVE FAVORITE ROUTE
+// ===============================
+saveBtn.addEventListener("click", async () => {
+  const name = prompt("Name this route:");
 
-    const payload = {
-      name,
-      from: routeData.from,
-      to: routeData.to,
-      vehicle: routeData.vehicle.toLowerCase(),
-      unit: routeData.unit,
-      distance: routeData.distance,
-      time: routeData.time,
-    };
+  if (!name || !lastRouteData) return;
 
-    const res = await fetch("/favorites", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+  const payload = {
+    name,
+    from: lastRouteData.from,
+    to: lastRouteData.to,
+    vehicle: lastRouteData.vehicle.toLowerCase(),
+    unit: lastRouteData.unit,
+    distance: lastRouteData.distance,
+    time: lastRouteData.time,
+  };
 
-    const result = await res.json();
+  const res = await fetch("/favorites", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
 
-    if (!res.ok) {
-      throw new Error(result.error || "Failed to save favorite route");
-    }
+  const result = await res.json();
 
-    console.log("Saved favorite:", result);
-    alert("Favorite route saved!");
-  } catch (err) {
-    console.error("Save favorite error:", err);
-    alert(`Could not save favorite route: ${err.message}`);
+  if (!res.ok) {
+    alert(result.error || "Failed to save route");
+    return;
   }
+
+  alert("Route saved!");
+});
+
+
+
+// ===============================
+//  VIEW FAVORITES (Modal)
+// ===============================
+viewBtn.addEventListener("click", loadFavorites);
+
+async function loadFavorites() {
+  const res = await fetch("/favorites");
+  const favorites = await res.json();
+
+  showModal(`
+    <h2>Saved Routes</h2>
+    ${
+      favorites.length === 0
+        ? "<p>No saved routes yet.</p>"
+        : favorites
+            .map(
+              (f) => `
+      <div class="favorite-item">
+        <strong>${f.name}</strong><br>
+        <small>${f.origin} → ${f.destination}</small><br>
+        <small>${f.distance}, ${f.time}</small><br>
+        <button class="btn danger" onclick="deleteFavorite(${f.id})">
+          Delete
+        </button>
+      </div>
+    `
+            )
+            .join("")
+    }
+    <button class="btn primary" onclick="closeModal()">Close</button>
+  `);
 }
+
+
+
+// ===============================
+//  DELETE FAVORITE
+// ===============================
+async function deleteFavorite(id) {
+  await fetch(`/favorites/${id}`, { method: "DELETE" });
+  loadFavorites(); // reload list
+}
+
+
+
+// ===============================
+//  MODAL FUNCTIONS
+// ===============================
+function showModal(html) {
+  modalRoot.innerHTML = `
+    <div class="modal">
+      <div class="modal-content">
+        ${html}
+      </div>
+    </div>
+  `;
+}
+
+function closeModal() {
+  modalRoot.innerHTML = "";
+}
+
+// Allow deleteFavorite from HTML
+window.deleteFavorite = deleteFavorite;
