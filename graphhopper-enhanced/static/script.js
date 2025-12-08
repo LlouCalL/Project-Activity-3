@@ -2,6 +2,9 @@ let map;
 let routeLayer;
 let highlightLayer;
 
+// Keep track of the last route for saving as favorite
+let lastRouteData = null;
+
 document.getElementById("routeForm").addEventListener("submit", async (e) => {
   e.preventDefault();
 
@@ -12,8 +15,11 @@ document.getElementById("routeForm").addEventListener("submit", async (e) => {
 
   const errorBox = document.getElementById("error");
   const results = document.getElementById("results");
+  const saveBtn = document.getElementById("saveRouteBtn");
+
   errorBox.classList.add("hidden");
   results.classList.add("hidden");
+  if (saveBtn) saveBtn.classList.add("hidden");
 
   try {
     const res = await fetch("/get_route", {
@@ -24,6 +30,9 @@ document.getElementById("routeForm").addEventListener("submit", async (e) => {
 
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Route not found");
+
+    // store latest route so we can save it as favorite
+    lastRouteData = data;
 
     document.getElementById("distance").textContent = data.distance;
     document.getElementById("time").textContent = data.time;
@@ -53,6 +62,16 @@ document.getElementById("routeForm").addEventListener("submit", async (e) => {
       box.addEventListener("mouseenter", () => highlightSegment(box.dataset.interval, coords));
       box.addEventListener("mouseleave", () => removeHighlight());
     });
+
+    // Show and wire the "Save Favorite Route" button
+    if (saveBtn) {
+      saveBtn.classList.remove("hidden");
+      saveBtn.onclick = () => {
+        if (lastRouteData) {
+          saveFavoriteRoute(lastRouteData);
+        }
+      };
+    }
   } catch (err) {
     errorBox.textContent = `Error: ${err.message}`;
     errorBox.classList.remove("hidden");
@@ -63,6 +82,12 @@ document.getElementById("clear").addEventListener("click", () => {
   document.getElementById("routeForm").reset();
   document.getElementById("results").classList.add("hidden");
   document.getElementById("error").classList.add("hidden");
+
+  const saveBtn = document.getElementById("saveRouteBtn");
+  if (saveBtn) saveBtn.classList.add("hidden");
+
+  lastRouteData = null;
+
   if (map && routeLayer) routeLayer.remove();
   if (highlightLayer) highlightLayer.remove();
 });
@@ -96,4 +121,40 @@ function highlightSegment(intervalData, coords) {
 
 function removeHighlight() {
   if (highlightLayer) highlightLayer.remove();
+}
+
+// --------------- NEW: Save Favorite Route ---------------
+async function saveFavoriteRoute(routeData) {
+  try {
+    const name = prompt("Name this route (e.g., Weekend to Tagaytay):");
+    if (!name) return;
+
+    const payload = {
+      name,
+      from: routeData.from,
+      to: routeData.to,
+      vehicle: routeData.vehicle.toLowerCase(),
+      unit: routeData.unit,
+      distance: routeData.distance,
+      time: routeData.time,
+    };
+
+    const res = await fetch("/favorites", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const result = await res.json();
+
+    if (!res.ok) {
+      throw new Error(result.error || "Failed to save favorite route");
+    }
+
+    console.log("Saved favorite:", result);
+    alert("Favorite route saved!");
+  } catch (err) {
+    console.error("Save favorite error:", err);
+    alert(`Could not save favorite route: ${err.message}`);
+  }
 }
