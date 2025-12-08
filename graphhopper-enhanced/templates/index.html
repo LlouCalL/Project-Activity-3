@@ -1,74 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>GraphHopper Route Finder</title>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GraphHopper Enhanced Routing</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
 
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    />
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
-  </head>
-  <body>
-    <div class="container">
-      <h1>GraphHopper Route Finder</h1>
-      <p class="subtitle">Plan your trip easily with real-time route info</p>
+<h2>GraphHopper Enhanced Route Planner</h2>
 
-      <form id="routeForm">
-        <div class="form-group">
-          <label for="from">Starting Location</label>
-          <input type="text" id="from" placeholder="Enter starting location" required />
-        </div>
+<div class="search-container">
 
-        <div class="form-group">
-          <label for="to">Destination</label>
-          <input type="text" id="to" placeholder="Enter destination" required />
-        </div>
+    <input type="text" id="start" placeholder="Start location...">
+    <div id="autocomplete-start" class="autocomplete-list"></div>
 
-        <div class="form-row">
-          <div class="form-group">
-            <label for="vehicle">Vehicle</label>
-            <select id="vehicle">
-              <option value="car">Car</option>
-              <option value="bike">Bike</option>
-              <option value="foot">Foot</option>
-            </select>
-          </div>
+    <input type="text" id="end" placeholder="Destination...">
+    <div id="autocomplete-end" class="autocomplete-list"></div>
 
-          <div class="form-group">
-            <label for="unit">Unit</label>
-            <select id="unit">
-              <option value="km">Metric (km)</option>
-              <option value="miles">Imperial (miles)</option>
-            </select>
-          </div>
-        </div>
+    <!-- NEW SWAP BUTTON -->
+    <button id="swapBtn" class="swap-btn">⇄ Swap</button>
 
-        <div class="button-row">
-          <button type="submit" class="btn primary">Get Route</button>
-          <button type="button" id="clear" class="btn danger">Clear</button>
-        </div>
-      </form>
+    <button id="routeBtn">Find Route</button>
+</div>
 
-      <div id="results" class="results hidden">
-        <!-- Horizontal summary section -->
-        <div class="summary-horizontal">
-          <div><strong>Distance:</strong> <span id="distance"></span></div>
-          <div><strong>Time:</strong> <span id="time"></span></div>
-          <div><strong>Vehicle:</strong> <span id="vehicleType"></span></div>
-        </div>
+<!-- Favorites Section -->
+<div class="favorites-container">
+    <h3>⭐ Favorite Routes</h3>
+    <ul id="favoriteRoutes"></ul>
+</div>
 
-        <div id="map"></div>
+<!-- Analytics Section -->
+<div class="analytics-container">
+    <h3>📊 Route Analytics</h3>
+    <p>Total Routes Planned: <span id="totalRoutes">0</span></p>
+    <p>Most Frequent Route: <span id="topRoute">None</span></p>
+</div>
 
-        <div id="instructions" class="instructions"></div>
-      </div>
-
-      <div id="error" class="error hidden"></div>
-    </div>
-
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
-  </body>
+<script src="script.js"></script>
+</body>
 </html>
