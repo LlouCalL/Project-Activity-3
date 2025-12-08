@@ -4,14 +4,14 @@ import sqlite3
 
 from flask import Flask, render_template, request, jsonify
 import requests
+from requests.exceptions import Timeout, RequestException
 
 app = Flask(__name__)
 
 # =========================================================
 #  GraphHopper API key
-#  TIP: put your real key here or load from env.
 # =========================================================
-GRAPHOPPER_API_KEY = "YOUR_GRAPHHOPPER_API_KEY_HERE"
+GRAPHOPPER_API_KEY = "7fc6933f-2209-4248-8ca4-d11d6eacfd68"
 
 # =========================================================
 #  SQLite setup for "Favorite Routes"
@@ -50,16 +50,29 @@ def init_db():
     conn.close()
 
 
-@app.before_first_request
-def startup():
-    """Initialize DB on first request."""
+# ✅ Flask 3-compatible: run DB init ONCE at startup
+with app.app_context():
     init_db()
 
 
 # =========================================================
 #  Helper: Convert location name → coordinates
+#  (with fallback for demo locations)
 # =========================================================
+
+# Hard-coded coordinates for demo, used if GraphHopper is slow/unavailable
+LOCATION_FALLBACKS = {
+    "batangas city": (13.7565, 121.0583),
+    "luisiana, laguna": (14.1726, 121.5048),
+    "manila": (14.5995, 120.9842),
+}
+
+
 def geocode_location(location: str, api_key: str):
+    """
+    Try GraphHopper geocoding first.
+    If it times out or fails, fall back to a few known demo locations.
+    """
     geocode_url = "https://graphhopper.com/api/1/geocode"
     params = {
         "q": location,
@@ -68,16 +81,26 @@ def geocode_location(location: str, api_key: str):
         "country": "PH",  # Restrict to PH
     }
 
-    response = requests.get(geocode_url, params=params)
-    response.raise_for_status()
-    data = response.json()
+    try:
+        response = requests.get(geocode_url, params=params, timeout=10)
+        response.raise_for_status()
+        data = response.json()
 
-    if not data["hits"]:
-        raise ValueError(f"Could not find location: {location}")
+        if data.get("hits"):
+            lat = data["hits"][0]["point"]["lat"]
+            lng = data["hits"][0]["point"]["lng"]
+            return lat, lng
+        # If API returns but no hits, we'll try fallback below
+    except (Timeout, RequestException) as e:
+        print(f"Geocoding timed out or failed ({e}), trying fallback for:", location)
 
-    lat = data["hits"][0]["point"]["lat"]
-    lng = data["hits"][0]["point"]["lng"]
-    return lat, lng
+    # ---- Fallback for demo ----
+    key = location.strip().lower()
+    if key in LOCATION_FALLBACKS:
+        return LOCATION_FALLBACKS[key]
+
+    # If no fallback defined, give a clear error
+    raise ValueError(f"Could not find location (and no fallback): {location}")
 
 
 # =========================================================
@@ -148,8 +171,18 @@ def get_route():
             "key": GRAPHOPPER_API_KEY,
         }
 
-        response = requests.get(route_url, params=params)
-        response.raise_for_status()
+        try:
+            response = requests.get(route_url, params=params, timeout=40)
+            response.raise_for_status()
+        except Timeout:
+            return jsonify(
+                {"error": "The routing service took too long to respond. Please try again."}
+            ), 504
+        except RequestException as e:
+            return jsonify(
+                {"error": f"Could not contact the routing service: {e}"}
+            ), 502
+
         route_data = response.json()
 
         if not route_data.get("paths"):
@@ -182,9 +215,13 @@ def get_route():
             }
         )
 
+    except ValueError as e:
+        # validation / geocode errors, 400 is fine
+        print("ValueError:", e)
+        return jsonify({"error": str(e)}), 400
     except Exception as e:
         print("Error:", e)
-        return jsonify({"error": str(e)}), 400
+        return jsonify({"error": "Unexpected server error."}), 500
 
 
 # ---------- Autocomplete endpoint ----------
@@ -204,7 +241,7 @@ def autocomplete():
             "autocomplete": "true",  # Important for autocomplete
         }
 
-        response = requests.get(geocode_url, params=params)
+        response = requests.get(geocode_url, params=params, timeout=10)
         response.raise_for_status()
         data = response.json()
 
@@ -212,9 +249,11 @@ def autocomplete():
         suggestions = [hit["name"] for hit in data.get("hits", [])]
         return jsonify(suggestions)
 
-    except Exception as e:
-        print("Autocomplete Error:", e)
-        # Return an empty list on error to prevent breaking the frontend
+    except Timeout:
+        print("Autocomplete timeout")
+        return jsonify([])  # silently fail for UI
+    except RequestException as e:
+        print("Autocomplete request error:", e)
         return jsonify([])
 
 
@@ -266,17 +305,6 @@ def list_favorites():
 def add_favorite():
     """
     Save a favorite route.
-
-    Expected JSON body:
-    {
-      "name": "Weekend trip",
-      "from": "Manila",
-      "to": "Tagaytay",
-      "vehicle": "car",
-      "unit": "km",
-      "distance": "65.20 km",
-      "time": "1h 30m 0s"
-    }
     """
     try:
         data = request.get_json() or {}
