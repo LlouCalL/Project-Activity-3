@@ -103,11 +103,47 @@ def get_route():
             "vehicle": vehicle.title(),
             "instructions": instructions,
             "points": points,
+            "from": from_loc,  # Added for favorite route saving
+            "to": to_loc,      # Added for favorite route saving
         })
 
     except Exception as e:
         print("Error:", e)
         return jsonify({"error": str(e)}), 400
+
+
+# --- NEW ENDPOINT: Geocoding Autocomplete
+@app.route("/autocomplete", methods=["GET"])
+def autocomplete():
+    try:
+        query = request.args.get("q", "")
+        if not query:
+            return jsonify([])
+
+        geocode_url = "https://graphhopper.com/api/1/geocode"
+        params = {
+            "q": query,
+            "limit": 5,  # Fetch up to 5 results
+            "key": GRAPHOPPER_API_KEY,
+            "country": "PH",
+            "autocomplete": "true" # Important for autocomplete
+        }
+
+        response = requests.get(geocode_url, params=params)
+        response.raise_for_status()
+        data = response.json()
+
+        # Extract only the name/location text for the autocomplete list
+        suggestions = [
+            hit["name"] for hit in data.get("hits", [])
+        ]
+
+        return jsonify(suggestions)
+
+    except Exception as e:
+        print("Autocomplete Error:", e)
+        # Return an empty list on error to prevent breaking the frontend
+        return jsonify([])
 
 
 if __name__ == "__main__":
