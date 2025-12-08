@@ -9,6 +9,7 @@
       rel="stylesheet"
       href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
     />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
   </head>
   <body>
@@ -89,6 +90,19 @@
 
       <div id="error" class="error hidden"></div>
     </div>
+
+    <div class="button-row">
+  <button type="button" id="saveRouteBtn" class="btn secondary hidden">
+    Save Favorite Route
+  </button>
+  <button type="button" id="viewFavoritesBtn" class="btn secondary hidden">
+    View Saved Favorites
+  </button>
+
+  <button type="button" id="viewAnalyticsBtn" class="btn secondary">
+    📊 Analytics
+  </button>
+</div>
 
     <!-- ⭐ Modal container -->
     <div id="modal-root"></div>

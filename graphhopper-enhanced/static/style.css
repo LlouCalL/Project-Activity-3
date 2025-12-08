@@ -296,3 +296,24 @@ select {
 .form-group:has(+ .swap-container) {
   margin-bottom: 0.8rem;
 }
+
+/* ============================
+   Analytics Dashboard
+   ============================ */
+.chart-container {
+  background: #f9fcff;
+  border: 1px solid #d0e6f8;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.chart-container h3 {
+  text-align: center;
+  font-size: 1.1rem;
+  color: #444;
+  margin-top: 0;
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}

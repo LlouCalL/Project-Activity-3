@@ -240,3 +240,85 @@ if (swapBtn) {
     }, 300);
   });
 }
+
+// ===============================
+//  ANALYTICS DASHBOARD
+// ===============================
+const analyticsBtn = document.getElementById("viewAnalyticsBtn");
+
+if (analyticsBtn) {
+  analyticsBtn.addEventListener("click", loadAnalytics);
+}
+
+async function loadAnalytics() {
+  try {
+    const res = await fetch("/analytics_data");
+    const data = await res.json();
+
+    // 1. Open Modal with Canvas elements for Chart.js
+    showModal(`
+      <h2 style="text-align:center; margin-bottom: 1.5rem;">Analytics Dashboard</h2>
+      
+      <div class="chart-container">
+        <h3>Most Frequent Routes</h3>
+        <canvas id="routesChart"></canvas>
+      </div>
+
+      <div class="chart-container" style="margin-top: 2rem;">
+        <h3>Vehicle Preferences</h3>
+        <canvas id="vehicleChart"></canvas>
+      </div>
+
+      <button class="btn primary" onclick="closeModal()" style="margin-top: 1.5rem; width: 100%;">Close</button>
+    `);
+
+    // 2. Render the charts (needs a slight delay for DOM to update)
+    requestAnimationFrame(() => renderCharts(data));
+
+  } catch (err) {
+    console.error(err);
+    alert("Could not load analytics data.");
+  }
+}
+
+function renderCharts(data) {
+  // Chart 1: Top Routes (Bar Chart)
+  new Chart(document.getElementById("routesChart"), {
+    type: "bar",
+    data: {
+      labels: data.top_routes.map(r => r.label),
+      datasets: [{
+        label: "Requests",
+        data: data.top_routes.map(r => r.count),
+        backgroundColor: "#00c6ff",
+        borderRadius: 5
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: { beginAtZero: true, ticks: { stepSize: 1 } },
+        x: { ticks: { autoSkip: false, maxRotation: 45, minRotation: 45 } }
+      }
+    }
+  });
+
+  // Chart 2: Vehicle Usage (Doughnut Chart)
+  new Chart(document.getElementById("vehicleChart"), {
+    type: "doughnut",
+    data: {
+      labels: data.vehicles.map(v => v.label.toUpperCase()),
+      datasets: [{
+        data: data.vehicles.map(v => v.count),
+        backgroundColor: ["#ff6384", "#36a2eb", "#ffce56", "#4bc0c0"],
+        hoverOffset: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'bottom' }
+      }
+    }
+  });
+}
