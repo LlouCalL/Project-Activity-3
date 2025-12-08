@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GraphHopper Route Finder</title>
+
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>GraphHopper Route Finder</h1>
+      <p class="subtitle">Plan your trip easily with real-time route info</p>
+
+      <form id="routeForm">
+        <div class="form-group">
+          <label for="from">Starting Location</label>
+          <input type="text" id="from" placeholder="Enter starting location" required />
+        </div>
+
+        <div class="form-group">
+          <label for="to">Destination</label>
+          <input type="text" id="to" placeholder="Enter destination" required />
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="vehicle">Vehicle</label>
+            <select id="vehicle">
+              <option value="car">Car</option>
+              <option value="bike">Bike</option>
+              <option value="foot">Foot</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="unit">Unit</label>
+            <select id="unit">
+              <option value="km">Metric (km)</option>
+              <option value="miles">Imperial (miles)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="button-row">
+          <button type="submit" class="btn primary">Get Route</button>
+          <button type="button" id="clear" class="btn danger">Clear</button>
+        </div>
+      </form>
+
+      <!-- RESULTS SECTION -->
+      <div id="results" class="results hidden">
+
+        <!-- ⭐ Save & View Favorites Buttons -->
+        <div class="button-row">
+          <button type="button" id="saveRouteBtn" class="btn secondary hidden">
+            Save Favorite Route
+          </button>
+
+          <button type="button" id="viewFavoritesBtn" class="btn secondary hidden">
+            View Saved Favorites
+          </button>
+        </div>
+
+        <!-- Summary -->
+        <div class="summary-horizontal">
+          <div><strong>Distance:</strong> <span id="distance"></span></div>
+          <div><strong>Time:</strong> <span id="time"></span></div>
+          <div><strong>Vehicle:</strong> <span id="vehicleType"></span></div>
+        </div>
+
+        <div id="map"></div>
+        <div id="instructions" class="instructions"></div>
+      </div>
+
+      <div id="error" class="error hidden"></div>
+    </div>
+
+    <!-- ⭐ Modal container -->
+    <div id="modal-root"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+  </body>
+</html>
