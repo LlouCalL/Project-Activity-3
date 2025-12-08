@@ -1,16 +1,21 @@
 from flask import Flask, render_template, request, jsonify
 import requests
+from collections import defaultdict
 
 app = Flask(__name__)
 
-# GraphHopper API key
+# GraphHopper API Key
 GRAPHOPPER_API_KEY = "7fc6933f-2209-4248-8ca4-d11d6eacfd68"
+
+# ANALYTICS DATA STORAGE
+route_stats = defaultdict(int)
+vehicle_usage = defaultdict(int)
 
 
 # --- Helper: Convert location name → coordinates
 def geocode_location(location, api_key):
     geocode_url = "https://graphhopper.com/api/1/geocode"
-    params = {"q": location, "limit": 1, "key": api_key, "country": "PH"}  # Restrict to PH
+    params = {"q": location, "limit": 1, "key": api_key, "country": "PH"}
     response = requests.get(geocode_url, params=params)
     response.raise_for_status()
     data = response.json()
@@ -38,7 +43,7 @@ def format_time(milliseconds):
         return f"{seconds}s"
 
 
-# --- Helper: Convert meters → km or miles
+# --- Helper: Convert meters → km / miles
 def format_distance(meters, unit):
     if unit.lower().startswith("mile"):
         miles = meters / 1609.34
@@ -53,6 +58,7 @@ def index():
     return render_template("index.html")
 
 
+# --- ROUTE API ---
 @app.route("/get_route", methods=["POST"])
 def get_route():
     try:
@@ -62,15 +68,14 @@ def get_route():
         vehicle = data["vehicle"]
         unit = data.get("unit", "km")
 
-        # Geocode both addresses
+        # Geocoding
         from_lat, from_lng = geocode_location(from_loc, GRAPHOPPER_API_KEY)
         to_lat, to_lng = geocode_location(to_loc, GRAPHOPPER_API_KEY)
 
-        # Sanity check: prevent far-off mismatches
         if abs(from_lat - to_lat) > 10 or abs(from_lng - to_lng) > 10:
-            raise ValueError("Detected locations too far apart. Please specify more clearly.")
+            raise ValueError("Locations appear too far apart. Please specify more clearly.")
 
-        # GraphHopper routing request
+        # GraphHopper Routing API
         route_url = "https://graphhopper.com/api/1/route"
         params = {
             "point": [f"{from_lat},{from_lng}", f"{to_lat},{to_lng}"],
@@ -93,9 +98,18 @@ def get_route():
         time_text = format_time(path["time"])
 
         instructions = [
-            {"text": instr["text"], "distance": format_distance(instr["distance"], unit)}
+            {
+                "text": instr["text"],
+                "distance": format_distance(instr["distance"], unit),
+                "interval": instr["interval"]
+            }
             for instr in path["instructions"]
         ]
+
+        # --- ANALYTICS TRACKING ---
+        route_key = f"{from_loc} → {to_loc}"
+        route_stats[route_key] += 1
+        vehicle_usage[vehicle] += 1
 
         return jsonify({
             "distance": distance_text,
@@ -103,16 +117,15 @@ def get_route():
             "vehicle": vehicle.title(),
             "instructions": instructions,
             "points": points,
-            "from": from_loc,  # Added for favorite route saving
-            "to": to_loc,      # Added for favorite route saving
+            "from": from_loc,
+            "to": to_loc,
         })
 
     except Exception as e:
-        print("Error:", e)
         return jsonify({"error": str(e)}), 400
 
 
-# --- NEW ENDPOINT: Geocoding Autocomplete
+# --- AUTOCOMPLETE API ---
 @app.route("/autocomplete", methods=["GET"])
 def autocomplete():
     try:
@@ -123,27 +136,33 @@ def autocomplete():
         geocode_url = "https://graphhopper.com/api/1/geocode"
         params = {
             "q": query,
-            "limit": 5,  # Fetch up to 5 results
+            "limit": 5,
             "key": GRAPHOPPER_API_KEY,
             "country": "PH",
-            "autocomplete": "true" # Important for autocomplete
+            "autocomplete": "true"
         }
 
         response = requests.get(geocode_url, params=params)
         response.raise_for_status()
         data = response.json()
 
-        # Extract only the name/location text for the autocomplete list
-        suggestions = [
-            hit["name"] for hit in data.get("hits", [])
-        ]
-
+        suggestions = [hit["name"] for hit in data.get("hits", [])]
         return jsonify(suggestions)
 
-    except Exception as e:
-        print("Autocomplete Error:", e)
-        # Return an empty list on error to prevent breaking the frontend
+    except Exception:
         return jsonify([])
+
+
+# --- ANALYTICS API ---
+@app.route("/analytics", methods=["GET"])
+def analytics():
+    top_routes = sorted(route_stats.items(), key=lambda x: x[1], reverse=True)[:5]
+    vehicle_data = dict(vehicle_usage)
+
+    return jsonify({
+        "top_routes": [{"route": r, "count": c} for r, c in top_routes],
+        "vehicle_usage": vehicle_data
+    })
 
 
 if __name__ == "__main__":
