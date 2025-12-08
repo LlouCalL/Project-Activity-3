@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify 
 import requests
 from collections import defaultdict
 
@@ -7,12 +7,11 @@ app = Flask(__name__)
 # GraphHopper API Key
 GRAPHOPPER_API_KEY = "7fc6933f-2209-4248-8ca4-d11d6eacfd68"
 
-# ANALYTICS DATA STORAGE
+# --- ANALYTICS DATA STORAGE ---
 route_stats = defaultdict(int)
 vehicle_usage = defaultdict(int)
 
-
-# --- Helper: Convert location name → coordinates
+# --- Helper: Convert location name → coordinates ---
 def geocode_location(location, api_key):
     geocode_url = "https://graphhopper.com/api/1/geocode"
     params = {"q": location, "limit": 1, "key": api_key, "country": "PH"}
@@ -27,8 +26,7 @@ def geocode_location(location, api_key):
     lng = data["hits"][0]["point"]["lng"]
     return lat, lng
 
-
-# --- Helper: Format milliseconds → h, m, s
+# --- Helper: Format milliseconds → h, m, s ---
 def format_time(milliseconds):
     total_seconds = int(milliseconds / 1000)
     hours = total_seconds // 3600
@@ -42,8 +40,7 @@ def format_time(milliseconds):
     else:
         return f"{seconds}s"
 
-
-# --- Helper: Convert meters → km / miles
+# --- Helper: Convert meters → km / miles ---
 def format_distance(meters, unit):
     if unit.lower().startswith("mile"):
         miles = meters / 1609.34
@@ -52,11 +49,9 @@ def format_distance(meters, unit):
         kilometers = meters / 1000
         return f"{kilometers:.2f} km"
 
-
 @app.route("/")
 def index():
     return render_template("index.html")
-
 
 # --- ROUTE API ---
 @app.route("/get_route", methods=["POST"])
@@ -93,7 +88,7 @@ def get_route():
             raise ValueError("No route found between these points.")
 
         path = route_data["paths"][0]
-        points = path["points"]
+        points = path["points"]["coordinates"]  # ✅ return GeoJSON coordinates
         distance_text = format_distance(path["distance"], unit)
         time_text = format_time(path["time"])
 
@@ -124,35 +119,6 @@ def get_route():
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
-
-# --- AUTOCOMPLETE API ---
-@app.route("/autocomplete", methods=["GET"])
-def autocomplete():
-    try:
-        query = request.args.get("q", "")
-        if not query:
-            return jsonify([])
-
-        geocode_url = "https://graphhopper.com/api/1/geocode"
-        params = {
-            "q": query,
-            "limit": 5,
-            "key": GRAPHOPPER_API_KEY,
-            "country": "PH",
-            "autocomplete": "true"
-        }
-
-        response = requests.get(geocode_url, params=params)
-        response.raise_for_status()
-        data = response.json()
-
-        suggestions = [hit["name"] for hit in data.get("hits", [])]
-        return jsonify(suggestions)
-
-    except Exception:
-        return jsonify([])
-
-
 # --- ANALYTICS API ---
 @app.route("/analytics", methods=["GET"])
 def analytics():
@@ -163,7 +129,6 @@ def analytics():
         "top_routes": [{"route": r, "count": c} for r, c in top_routes],
         "vehicle_usage": vehicle_data
     })
-
 
 if __name__ == "__main__":
     app.run(debug=True)
