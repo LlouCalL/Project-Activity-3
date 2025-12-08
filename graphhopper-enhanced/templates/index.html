@@ -52,28 +52,36 @@
         </div>
       </form>
 
+      <!-- RESULTS SECTION -->
       <div id="results" class="results hidden">
-        <!-- Horizontal summary section -->
+
+        <!-- ⭐ Save & View Favorites Buttons -->
+        <div class="button-row">
+          <button type="button" id="saveRouteBtn" class="btn secondary hidden">
+            Save Favorite Route
+          </button>
+
+          <button type="button" id="viewFavoritesBtn" class="btn secondary hidden">
+            View Saved Favorites
+          </button>
+        </div>
+
+        <!-- Summary -->
         <div class="summary-horizontal">
           <div><strong>Distance:</strong> <span id="distance"></span></div>
           <div><strong>Time:</strong> <span id="time"></span></div>
           <div><strong>Vehicle:</strong> <span id="vehicleType"></span></div>
         </div>
 
-        <!-- Save Favorite Route button -->
-        <div class="button-row">
-          <button id="saveRouteBtn" class="btn secondary hidden">
-            ⭐ Save Favorite Route
-          </button>
-        </div>
-
         <div id="map"></div>
-
         <div id="instructions" class="instructions"></div>
       </div>
 
       <div id="error" class="error hidden"></div>
     </div>
+
+    <!-- ⭐ Modal container -->
+    <div id="modal-root"></div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
