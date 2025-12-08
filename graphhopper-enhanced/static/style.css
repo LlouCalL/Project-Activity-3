@@ -1,3 +1,6 @@
+/* ============================
+   Base Layout + Typography
+   ============================ */
 body {
   font-family: "Poppins", sans-serif;
   background: linear-gradient(to right, #e6f2f7, #00c6ff);
@@ -28,6 +31,9 @@ h1 {
   margin-bottom: 1.5rem;
 }
 
+/* ============================
+   Form & Inputs
+   ============================ */
 .form-group {
   margin-bottom: 1.2rem;
 }
@@ -47,15 +53,17 @@ select {
   font-size: 1rem;
 }
 
+/* ============================
+   Buttons
+   ============================ */
 .button-row {
   display: flex;
   justify-content: center;
   gap: 1rem;
   margin-top: 1rem;
-  margin-bottom: 2rem; /* For the top button row (Get Route / Clear) */
+  margin-bottom: 2rem;
 }
 
-/* Optional: tighter spacing for the save button row inside results */
 .results .button-row {
   margin-top: 0.5rem;
   margin-bottom: 1rem;
@@ -80,7 +88,6 @@ select {
   color: white;
 }
 
-/* ⭐ New: style for Save Favorite Route button */
 .btn.secondary {
   background: #ffffff;
   color: #00c6ff;
@@ -95,7 +102,9 @@ select {
   transform: scale(1.05);
 }
 
-/* Horizontal summary box */
+/* ============================
+   Summary Section
+   ============================ */
 .summary-horizontal {
   display: flex;
   justify-content: space-between;
@@ -103,7 +112,7 @@ select {
   background: #f1f8ff;
   border-radius: 10px;
   padding: 1rem 1.5rem;
-  margin-top: 1rem; /* Space from buttons */
+  margin-top: 1rem;
   margin-bottom: 1.5rem;
   text-align: center;
 }
@@ -112,14 +121,18 @@ select {
   flex: 1;
 }
 
-/* Map styling */
+/* ============================
+   Map
+   ============================ */
 #map {
   height: 350px;
   border-radius: 10px;
   margin-bottom: 1.5rem;
 }
 
-/* Boxed instructions design */
+/* ============================
+   Instructions
+   ============================ */
 .instructions {
   background: #f9fcff;
   border: 1px solid #d0e6f8;
@@ -148,7 +161,9 @@ select {
   transform: scale(1.01);
 }
 
-/* Error box */
+/* ============================
+   Error Message
+   ============================ */
 .error {
   margin-top: 1.5rem;
   padding: 1rem;
@@ -157,12 +172,14 @@ select {
   color: #b00000;
 }
 
-/* Hide element */
+/* Hide */
 .hidden {
   display: none;
 }
 
-/* ✅ Responsive tweaks for mobile */
+/* ============================
+   Responsive
+   ============================ */
 @media (max-width: 600px) {
   .summary-horizontal {
     flex-direction: column;
@@ -176,4 +193,60 @@ select {
   .form-row {
     flex-direction: column;
   }
+}
+
+/* ============================
+   ⭐ NEW — FAVORITES MODAL
+   ============================ */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+
+  /* fade-in animation */
+  opacity: 1;
+  transition: opacity 0.25s ease;
+}
+
+.modal.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.modal-content {
+  background: #ffffff;
+  padding: 2rem;
+  border-radius: 14px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+
+  /* smooth slide effect */
+  transform: translateY(-20px);
+  animation: modalSlide 0.3s ease forwards;
+}
+
+@keyframes modalSlide {
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* Favorite Item Card */
+.favorite-item {
+  background: #f9fcff;
+  border: 1px solid #d0e6f8;
+  padding: 1rem;
+  border-radius: 10px;
+  margin-bottom: 1rem;
+}
+
+.favorite-item button {
+  margin-top: 0.5rem;
 }
