@@ -213,3 +213,30 @@ function closeModal() {
 
 // Allow deleteFavorite from HTML
 window.deleteFavorite = deleteFavorite;
+
+
+// ===============================
+//  SWAP LOCATIONS
+// ===============================
+const swapBtn = document.getElementById("swapBtn");
+
+if (swapBtn) {
+  swapBtn.addEventListener("click", () => {
+    const fromInput = document.getElementById("from");
+    const toInput = document.getElementById("to");
+
+    // 1. Get current values
+    const tempOrigin = fromInput.value;
+    const tempDest = toInput.value;
+
+    // 2. Swap them
+    fromInput.value = tempDest;
+    toInput.value = tempOrigin;
+
+    // 3. Optional: Add a visual rotation effect via class
+    swapBtn.style.transform = "rotate(180deg)";
+    setTimeout(() => {
+      swapBtn.style.transform = "rotate(0deg)";
+    }, 300);
+  });
+}

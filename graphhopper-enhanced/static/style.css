@@ -250,3 +250,49 @@ select {
 .favorite-item button {
   margin-top: 0.5rem;
 }
+
+/* ============================
+   Swap Button Feature
+   ============================ */
+.swap-container {
+  display: flex;
+  justify-content: center;
+  margin-top: -15px;    /* Pull it up slightly */
+  margin-bottom: -15px; /* Pull the next input up slightly */
+  position: relative;
+  z-index: 10;          /* Ensure it sits on top */
+  pointer-events: none; /* Allow clicks to pass through the container area... */
+}
+
+.btn-swap {
+  pointer-events: auto; /* ...but catch clicks on the button itself */
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  border: 1px solid #ddd;
+  background: #fff;
+  color: #00c6ff;
+  font-size: 1.2rem;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  transition: transform 0.3s ease, background 0.2s;
+}
+
+.btn-swap:hover {
+  background: #f0f8ff;
+  transform: rotate(180deg);
+  border-color: #00c6ff;
+}
+
+.btn-swap:active {
+  transform: scale(0.9) rotate(180deg);
+}
+
+/* Add spacing adjustment to the inputs to accommodate the button */
+.form-group:has(+ .swap-container) {
+  margin-bottom: 0.8rem;
+}
