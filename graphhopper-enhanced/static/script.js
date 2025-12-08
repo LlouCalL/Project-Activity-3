@@ -32,11 +32,11 @@ document.getElementById("routeForm").addEventListener("submit", async (e) => {
     results.classList.remove("hidden");
 
     const coords = data.points.coordinates.map((p) => [p[1], p[0]]);
-    showMap(coords, data.instructions);
+    showMap(coords);
 
-    // Display instructions in boxes
     const instructionsDiv = document.getElementById("instructions");
     instructionsDiv.innerHTML = "<h3>Turn-by-Turn Instructions</h3>";
+
     data.instructions.forEach((step, i) => {
       const div = document.createElement("div");
       div.classList.add("instruction-box");
@@ -48,11 +48,14 @@ document.getElementById("routeForm").addEventListener("submit", async (e) => {
       instructionsDiv.appendChild(div);
     });
 
-    // Add hover event for each instruction
     document.querySelectorAll(".instruction-box").forEach((box) => {
-      box.addEventListener("mouseenter", () => highlightSegment(box.dataset.interval, coords));
-      box.addEventListener("mouseleave", () => removeHighlight());
+      box.addEventListener("mouseenter", () =>
+        highlightSegment(box.dataset.interval, coords)
+      );
+      box.addEventListener("mouseleave", removeHighlight);
     });
+
+    loadAnalytics();
   } catch (err) {
     errorBox.textContent = `Error: ${err.message}`;
     errorBox.classList.remove("hidden");
@@ -67,7 +70,7 @@ document.getElementById("clear").addEventListener("click", () => {
   if (highlightLayer) highlightLayer.remove();
 });
 
-function showMap(coords, instructions) {
+function showMap(coords) {
   const start = coords[0];
   const end = coords[coords.length - 1];
 
@@ -96,4 +99,42 @@ function highlightSegment(intervalData, coords) {
 
 function removeHighlight() {
   if (highlightLayer) highlightLayer.remove();
+}
+
+
+async function loadAnalytics() {
+  try {
+    const res = await fetch("/analytics");
+    const data = await res.json();
+
+    const routeLabels = data.top_routes.map(r => r.route);
+    const routeCounts = data.top_routes.map(r => r.count);
+    const vehicleLabels = Object.keys(data.vehicle_usage);
+    const vehicleCounts = Object.values(data.vehicle_usage);
+
+    new Chart(document.getElementById("routeChart"), {
+      type: "bar",
+      data: {
+        labels: routeLabels,
+        datasets: [{
+          label: "Most Frequent Routes",
+          data: routeCounts
+        }]
+      }
+    });
+
+    new Chart(document.getElementById("vehicleChart"), {
+      type: "pie",
+      data: {
+        labels: vehicleLabels,
+        datasets: [{
+          label: "Vehicle Usage",
+          data: vehicleCounts
+        }]
+      }
+    });
+
+  } catch (err) {
+    console.error("Analytics error:", err);
+  }
 }

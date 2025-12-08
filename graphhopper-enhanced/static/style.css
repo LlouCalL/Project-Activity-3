@@ -52,7 +52,7 @@ select {
   justify-content: center;
   gap: 1rem;
   margin-top: 1rem;
-  margin-bottom: 2rem; /* ✅ Added space below buttons */
+  margin-bottom: 2rem;
 }
 
 .btn {
@@ -78,7 +78,6 @@ select {
   transform: scale(1.05);
 }
 
-/* Horizontal summary box */
 .summary-horizontal {
   display: flex;
   justify-content: space-between;
@@ -86,7 +85,7 @@ select {
   background: #f1f8ff;
   border-radius: 10px;
   padding: 1rem 1.5rem;
-  margin-top: 1rem; /* ✅ Space from buttons */
+  margin-top: 1rem;
   margin-bottom: 1.5rem;
   text-align: center;
 }
@@ -95,14 +94,12 @@ select {
   flex: 1;
 }
 
-/* Map styling */
 #map {
   height: 350px;
   border-radius: 10px;
   margin-bottom: 1.5rem;
 }
 
-/* Boxed instructions design */
 .instructions {
   background: #f9fcff;
   border: 1px solid #d0e6f8;
@@ -131,7 +128,6 @@ select {
   transform: scale(1.01);
 }
 
-/* Error box */
 .error {
   margin-top: 1.5rem;
   padding: 1rem;
@@ -140,12 +136,18 @@ select {
   color: #b00000;
 }
 
-/* Hide element */
 .hidden {
   display: none;
 }
 
-/* ✅ Responsive tweaks for mobile */
+#analytics {
+  margin-top: 2rem;
+  background: #ffffff;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
 @media (max-width: 600px) {
   .summary-horizontal {
     flex-direction: column;
